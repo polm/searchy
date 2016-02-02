@@ -1,0 +1,24 @@
+{
+  "name": "searchy",
+  "version": "0.0.1",
+  "description": "Interactive terminal search",
+  "main": "lib/search.js",
+  "scripts": {
+    "test": "false"
+  },
+  "keywords": [
+    "search",
+    "ncurses",
+    "cli"
+  ],
+  "author": "23",
+  "license": "WTFPL",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/polm/searchy.git"
+  },
+  "dependencies": {
+    "charm": "^1.0.0",
+    "visualwidth": "^0.1.0"
+  }
+}
