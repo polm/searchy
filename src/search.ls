@@ -87,6 +87,7 @@ export search = (items, cb) ->
       pad-length = Math.max 0, process.stdout.columns - vw.width matches[row]
       charm.write matches[row] + (' ' * pad-length)
       charm.display \reset
+  # send a little data to get things started
   process.stdin.emit \data, [27 91 66]
   process.stdin.emit \data, [27 91 65]
 
