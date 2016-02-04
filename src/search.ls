@@ -1,7 +1,6 @@
 Charm = require \charm
 vw = require \visualwidth
-
-#TODO handle wide characters
+ttys = require \ttys
 
 bytes-to-string = ->
   # enter is weird
@@ -22,10 +21,10 @@ export search = (items, cb) ->
 
   # get the terminal ready
   charm = Charm!
-  charm.pipe process.stdout
+  charm.pipe ttys.stdout
   charm.reset!
   charm.cursor false
-  process.stdin.set-raw-mode true
+  ttys.stdin.set-raw-mode true
 
   # get our search variables ready
   needle = ''
@@ -33,15 +32,18 @@ export search = (items, cb) ->
   matches = []
 
   # now handle input
-  process.stdin.on \data, (chunk) ->
+  ttys.stdin.on \data, (chunk) ->
     if height < 0 then height := 0
     # ignore non-printing chars
     if vw.width(chunk.to-string!) == 0 then return
 
+    rows = ttys.stdout.rows
+    cols = ttys.stdout.columns
+
     # first process input
     switch bytes-to-string chunk
     | UP => height := Math.max 0, height - 1
-    | DOWN => height := Math.min process.stdout.rows, matches.length - 1, height + 1
+    | DOWN => height := Math.min rows, matches.length - 1, height + 1
     | CTRLC, CTRLD =>
       cleanup-screen charm
       process.exit!
@@ -59,44 +61,44 @@ export search = (items, cb) ->
         needle := needle + chunk
         height := 0
 
-    matches := get-hits needle, items
-    draw-screen charm, needle, height, matches
+    matches := get-hits needle, items, rows
+    draw-screen charm, rows, cols, needle, height, matches
 
     # send a little data to get things started
-  process.stdin.emit \data, [27 91 66]
-  process.stdin.emit \data, [27 91 65]
+  ttys.stdin.emit \data, [27 91 66]
+  ttys.stdin.emit \data, [27 91 65]
 
 cleanup-screen = (charm) ->
-  process.stdin.set-raw-mode false
-  process.stdin.end!
+  ttys.stdin.set-raw-mode false
+  ttys.stdin.end!
   charm.erase \screen
   charm.cursor true
   charm.display \reset
   charm.position 1, 1
   charm.end!
 
-draw-screen = (charm, needle, sel-row, matches) ->
+draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
   # now draw the screen
   charm.erase \screen
   charm.position 1, 1
   charm.write "query: " + needle
 
   # draw the options
-  for row from 0 til process.stdout.rows - 1
+  for row from 0 til rows - 1
     if row >= matches.length then return
     charm.position 1, row + 2
     if row == sel-row then charm.display \reverse
-    pad-length = Math.max 0, process.stdout.columns - vw.width matches[row]
+    pad-length = Math.max 0, columns - vw.width matches[row]
     charm.write matches[row] + (' ' * pad-length)
     charm.display \reset
 
-get-hits = (needle, items) ->
+get-hits = (needle, items, rows) ->
   # filter items to match needle
   matches = []
   for item in items
     if query-hits needle, item then matches.push item
     # don't bother matching more stuff than we have rows on screen
-    if matches.length > process.stdout.rows then break
+    if matches.length > rows then break
   return matches
 
 query-hits = (needle, haystack) ->
@@ -107,3 +109,16 @@ query-hits = (needle, haystack) ->
   option = if /[A-Z]/.test needle then "" else \i
   (new RegExp needle, option).test haystack
 
+read-stdin-as-lines-then = (func) ->
+  buf = ''
+  process.stdin.set-encoding \utf-8
+  process.stdin.on \data, -> buf += it
+  process.stdin.on \end, -> func (buf.split "\n" |> no-empty)
+
+no-empty = -> it.filter (-> not (it == null or it == '') )
+
+export search-from-stdin = ->
+  # read stdin and print selection
+  # like percol, fzf, etc.
+  read-stdin-as-lines-then ->
+    search it, -> console.log it
