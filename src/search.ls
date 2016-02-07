@@ -2,6 +2,14 @@ Charm = require \charm
 vw = require \visualwidth
 ttys = require \ttys
 
+# use migemo if available
+
+migemo = null
+try
+  migemo = require \node-migemo
+catch
+  # not available, that's ok
+
 bytes-to-string = ->
   # enter is weird
   switch it.to-string!
@@ -104,10 +112,17 @@ get-hits = (needle, items, rows) ->
 query-hits = (needle, haystack) ->
   if not needle or needle.length == 0 then return true
 
-  # case sensitivity works like vim "smartcase" - case insensitive by default,
-  # case sensitive if caps are in the query
-  option = if /[A-Z]/.test needle then "" else \i
-  (new RegExp needle, option).test haystack
+  regex = null
+
+  if migemo
+    regex = migemo.to-regex needle
+  else
+    # case sensitivity works like vim "smartcase" - case insensitive by default,
+    # case sensitive if caps are in the query
+    option = if /[A-Z]/.test needle then "" else \i
+    regex = (new RegExp needle, option)
+
+  regex.test haystack
 
 read-stdin-as-lines-then = (func) ->
   buf = ''

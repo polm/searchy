@@ -2,6 +2,8 @@
 
 Simple interactive search for Node, inspired by [percol](https://github.com/mooz/percol) and [fzf](https://github.com/junegunn/fzf). It works as a standalone program you can put in bash pipes or as a menu for inside your own application.
 
+**Note:** if you install [https://github.com/polm/node-migemo] it will be used to make matching Japanese text easier.
+
 # Command line example
 
     npm install -g searchy
