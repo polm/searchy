@@ -95,6 +95,7 @@ draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
 
   # draw the choices
   for row from 0 til rows - 1
+    charm.display \reset
     # nothing to write
     if row >= matches.length then return
     # go to the front of the line
@@ -118,8 +119,6 @@ draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
       charm.foreground \white
       charm.write txt.substr (hit.index + hit.0.length)
       charm.write (' ' * pad-length)
-
-    charm.display \reset
 
 get-hits = (state, items, rows) ->
   # filter items to match needle
