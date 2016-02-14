@@ -3,7 +3,6 @@ vw = require \visualwidth
 ttys = require \ttys
 
 # use migemo if available
-
 migemo = null
 try
   migemo = require \node-migemo
@@ -35,13 +34,15 @@ export search = (items, cb) ->
   ttys.stdin.set-raw-mode true
 
   # get our search variables ready
-  needle = ''
-  height = 0
-  matches = []
+  state = {
+    needle: ''
+    height: 0
+    matches: []
+  }
 
   # now handle input
   ttys.stdin.on \data, (chunk) ->
-    if height < 0 then height := 0
+    if state.height < 0 then state.height = 0
     # ignore non-printing chars
     if vw.width(chunk.to-string!) == 0 then return
 
@@ -50,27 +51,27 @@ export search = (items, cb) ->
 
     # first process input
     switch bytes-to-string chunk
-    | UP => height := Math.max 0, height - 1
-    | DOWN => height := Math.min rows, matches.length - 1, height + 1
+    | UP => state.height = Math.max 0, state.height - 1
+    | DOWN => state.height = Math.min rows, state.matches.length - 1, state.height + 1
     | CTRLC, CTRLD =>
       cleanup-screen charm
       process.exit!
     | ENTER =>
       cleanup-screen charm
-      cb? matches[height]
+      cb? state.matches[state.height]
     | BACKSPACE =>
-      height := 0
-      if needle.length > 0
-        needle := needle.substr 0, needle.length - 1
+      state.height = 0
+      if state.needle.length > 0
+        state.needle = state.needle.substr 0, state.needle.length - 1
     # if it's not special it's just text
     default =>
       # ignore other escapes
       if 0 != that.index-of "27.91."
-        needle := needle + chunk
-        height := 0
+        state.needle = state.needle + chunk
+        state.height = 0
 
-    matches := get-hits needle, items, rows
-    draw-screen charm, rows, cols, needle, height, matches
+    get-hits state, items, rows
+    draw-screen charm, rows, cols, state.needle, state.height, state.matches
 
     # send a little data to get things started
   ttys.stdin.emit \data, [27 91 66]
@@ -91,7 +92,7 @@ draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
   charm.position 1, 1
   charm.write "query: " + needle
 
-  # draw the options
+  # draw the choices
   for row from 0 til rows - 1
     if row >= matches.length then return
     charm.position 1, row + 2
@@ -100,14 +101,14 @@ draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
     charm.write matches[row] + (' ' * pad-length)
     charm.display \reset
 
-get-hits = (needle, items, rows) ->
+get-hits = (state, items, rows) ->
   # filter items to match needle
   matches = []
   for item in items
-    if query-hits needle, item then matches.push item
+    if query-hits state.needle, item then matches.push item
     # don't bother matching more stuff than we have rows on screen
     if matches.length > rows then break
-  return matches
+  state.matches = matches
 
 query-hits = (needle, haystack) ->
   if not needle or needle.length == 0 then return true
