@@ -30,7 +30,7 @@ export search = (items, cb) ->
   charm = Charm!
   charm.pipe ttys.stdout
   charm.reset!
-  charm.cursor false
+  charm.cursor true
   ttys.stdin.set-raw-mode true
 
   # get our search variables ready
@@ -100,6 +100,9 @@ draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
     pad-length = Math.max 0, columns - vw.width matches[row]
     charm.write matches[row] + (' ' * pad-length)
     charm.display \reset
+
+  charm.position ("query: " + needle).length, 1
+
 
 get-hits = (state, items, rows) ->
   # filter items to match needle
