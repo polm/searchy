@@ -31,6 +31,7 @@ export search = (items, cb) ->
   charm.pipe ttys.stdout
   charm.reset!
   charm.cursor true
+  charm.foreground \white
   ttys.stdin.set-raw-mode true
 
   # get our search variables ready
@@ -94,27 +95,44 @@ draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
 
   # draw the choices
   for row from 0 til rows - 1
+    # nothing to write
     if row >= matches.length then return
+    # go to the front of the line
     charm.position 1, row + 2
+    # highlight if selected
     if row == sel-row then charm.display \reverse
-    pad-length = Math.max 0, columns - vw.width matches[row]
-    charm.write matches[row] + (' ' * pad-length)
+
+    # this may be an object, so get a string to work with
+    txt = matches[row].to-string!
+    # vw handles wide characters for us
+    pad-length = Math.max 0, columns - vw.width txt
+    # if we have no search, don't highlight
+    if not matches[row].hit
+      charm.write txt + (' ' * pad-length)
+    else
+      # highlight hits
+      hit = matches[row].hit
+      charm.write txt.substr 0, hit.index
+      charm.foreground \yellow
+      charm.write txt.substr hit.index, hit.0.length
+      charm.foreground \white
+      charm.write txt.substr (hit.index + hit.0.length)
+      charm.write (' ' * pad-length)
+
     charm.display \reset
-
-  charm.position ("query: " + needle).length, 1
-
 
 get-hits = (state, items, rows) ->
   # filter items to match needle
   matches = []
   for item in items
-    if query-hits state.needle, item then matches.push item
+    hit = query-hits state.needle, item
+    if hit then matches.push hit
     # don't bother matching more stuff than we have rows on screen
     if matches.length > rows then break
   state.matches = matches
 
 query-hits = (needle, haystack) ->
-  if not needle or needle.length == 0 then return true
+  if not needle or needle.length == 0 then return haystack
 
   regex = null
 
@@ -126,7 +144,14 @@ query-hits = (needle, haystack) ->
     option = if /[A-Z]/.test needle then "" else \i
     regex = (new RegExp needle, option)
 
-  regex.test haystack
+  if regex.test haystack
+    return SearchyMatch haystack, haystack.match regex
+
+# To hold state for matches
+# Necessary because JS doesn't allow adding properties to Strings
+class SearchyMatch
+  (@text, @hit) ~>
+  to-string: ~> @text
 
 read-stdin-as-lines-then = (func) ->
   buf = ''
