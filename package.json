@@ -1,6 +1,6 @@
 {
   "name": "searchy",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Interactive terminal search",
   "main": "lib/search.js",
   "scripts": {
