@@ -59,7 +59,7 @@ export search = (items, cb) ->
       process.exit!
     | ENTER =>
       cleanup-screen charm
-      cb? state.matches[state.height]
+      cb? state.matches[state.height].to-string!
     | BACKSPACE =>
       state.height = 0
       if state.needle.length > 0
