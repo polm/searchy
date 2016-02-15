@@ -116,7 +116,8 @@ draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
       charm.write txt.substr 0, hit.index
       charm.foreground \yellow
       charm.write txt.substr hit.index, hit.0.length
-      charm.foreground \white
+      charm.display \reset
+      if row == sel-row then charm.display \reverse
       charm.write txt.substr (hit.index + hit.0.length)
       charm.write (' ' * pad-length)
 
