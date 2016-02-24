@@ -24,6 +24,14 @@ CTRLD = \4
 ENTER = "\n"
 
 export search = (items, cb) ->
+  search-core items, cb
+
+export search-using-default = (items, cb, default-cb) ->
+  # same as standard search, but use the search string
+  # if no matches are available. 
+  search-core items, cb, (default-cb or cb)
+
+search-core = (items, cb, default-cb) ->
   # each "item" should be a string
 
   # get the terminal ready
@@ -59,7 +67,10 @@ export search = (items, cb) ->
       process.exit!
     | ENTER =>
       cleanup-screen charm
-      cb? state.matches[state.height].to-string!
+      if state.matches.length > 0
+        cb? state.matches[state.height].to-string!
+      else # if no matches, pass search string instead
+        default-cb? state.needle
     | BACKSPACE =>
       state.height = 0
       if state.needle.length > 0
