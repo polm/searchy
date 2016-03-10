@@ -9,21 +9,18 @@ try
 catch
   # not available, that's ok
 
-bytes-to-string = ->
-  # enter is weird
-  switch it.to-string!
-  | "\n", "\r" => "\n"
-  # converts each byte to a decimal number string
-  default [].join.call it, \.
+bytes-to-string = -> [].join.call it, \.
 
 DOWN = \27.91.66
 UP   = \27.91.65
 BACKSPACE = \127
 CTRLC = \3
 CTRLD = \4
+CTRLK = \11
+CTRLJ = \10
 CTRLN = \14
 CTRLP = \16
-ENTER = "\n"
+ENTER = \13
 
 export search = (items, cb) ->
   search-core items, cb
@@ -62,8 +59,8 @@ search-core = (items, cb, default-cb) ->
 
     # first process input
     switch bytes-to-string chunk
-    | UP, CTRLP => state.height = Math.max 0, state.height - 1
-    | DOWN, CTRLN => state.height = Math.min rows, state.matches.length - 1, state.height + 1
+    | UP, CTRLP, CTRLK => state.height = Math.max 0, state.height - 1
+    | DOWN, CTRLN, CTRLJ => state.height = Math.min rows, state.matches.length - 1, state.height + 1
     | CTRLC, CTRLD =>
       cleanup-screen charm
       process.exit!
