@@ -21,6 +21,8 @@ UP   = \27.91.65
 BACKSPACE = \127
 CTRLC = \3
 CTRLD = \4
+CTRLN = \14
+CTRLP = \16
 ENTER = "\n"
 
 export search = (items, cb) ->
@@ -60,8 +62,8 @@ search-core = (items, cb, default-cb) ->
 
     # first process input
     switch bytes-to-string chunk
-    | UP => state.height = Math.max 0, state.height - 1
-    | DOWN => state.height = Math.min rows, state.matches.length - 1, state.height + 1
+    | UP, CTRLP => state.height = Math.max 0, state.height - 1
+    | DOWN, CTRLN => state.height = Math.min rows, state.matches.length - 1, state.height + 1
     | CTRLC, CTRLD =>
       cleanup-screen charm
       process.exit!
