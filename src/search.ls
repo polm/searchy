@@ -50,6 +50,7 @@ search-core = (items, cb, default-cb, matcher) ->
 
   # now handle input
   ttys.stdin.on \data, (chunk) ->
+
     if state.height < 0 then state.height = 0
     # ignore non-printing chars
     if vw.width(chunk.to-string!) == 0 then return
@@ -57,10 +58,19 @@ search-core = (items, cb, default-cb, matcher) ->
     rows = ttys.stdout.rows
     cols = ttys.stdout.columns
 
-    # first process input
+    charm.cursor false
+
     switch bytes-to-string chunk
-    | UP, CTRLP, CTRLK => state.height = Math.max 0, state.height - 1
-    | DOWN, CTRLN, CTRLJ => state.height = Math.min rows, state.matches.length - 1, state.height + 1
+    | UP, CTRLP, CTRLK =>
+      old-height = state.height
+      state.height = Math.max 0, state.height - 1
+      draw-row charm, rows, cols, state.needle, state.height, state.matches, old-height
+      draw-row charm, rows, cols, state.needle, state.height, state.matches, state.height
+    | DOWN, CTRLN, CTRLJ =>
+      old-height = state.height
+      state.height = Math.min rows, state.matches.length - 1, state.height + 1
+      draw-row charm, rows, cols, state.needle, state.height, state.matches, old-height
+      draw-row charm, rows, cols, state.needle, state.height, state.matches, state.height
     | CTRLC, CTRLD =>
       cleanup-screen charm
       process.exit!
@@ -74,19 +84,21 @@ search-core = (items, cb, default-cb, matcher) ->
       state.height = 0
       if state.needle.length > 0
         state.needle = state.needle.substr 0, state.needle.length - 1
+      get-hits state, items, rows, matcher
+      draw-screen charm, rows, cols, state.needle, state.height, state.matches
     # if it's not special it's just text
     default =>
       # ignore other escapes
       if 0 != that.index-of "27.91."
         state.needle = state.needle + chunk
         state.height = 0
+      get-hits state, items, rows, matcher
+      draw-screen charm, rows, cols, state.needle, state.height, state.matches
 
-    get-hits state, items, rows, matcher
-    draw-screen charm, rows, cols, state.needle, state.height, state.matches
+    charm.cursor true
+    charm.position ("query: " + state.needle).length + 1, 1
 
-    # send a little data to get things started
-  ttys.stdin.emit \data, [27 91 66]
-  ttys.stdin.emit \data, [27 91 65]
+  ttys.stdin.emit \data, [127] # backspace to trigger first display
 
 cleanup-screen = (charm) ->
   ttys.stdin.set-raw-mode false
@@ -97,19 +109,26 @@ cleanup-screen = (charm) ->
   charm.position 1, 1
   charm.end!
 
-draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
+draw-screen = (charm, rows, columns, needle, sel-row, matches, old-row=-1) ->
   # now draw the screen
+  charm.display \reset
   charm.erase \screen
   charm.position 1, 1
   charm.write "query: " + needle
 
   # draw the choices
   for row from 0 til rows - 1
+    draw-row charm, rows, columns, needle, sel-row, matches, row
+
+draw-row = (charm, rows, columns, needle, sel-row, matches, row) ->
     charm.display \reset
     # nothing to write
-    if row >= matches.length then return
+    if row < 0 then return
     # go to the front of the line
     charm.position 1, row + 2
+    if row >= matches.length
+      charm.erase \line
+      return
     # highlight if selected
     if row == sel-row then charm.display \reverse
 
