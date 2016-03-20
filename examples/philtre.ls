@@ -3,7 +3,7 @@
 # The same general strategy can be used for searching any
 # non-string objects
 
-{search, search-using-default} = require \./lib/search
+{search, search-using-default} = require \../lib/search
 
 philtre = require(\philtre).philtre
 
