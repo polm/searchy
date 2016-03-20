@@ -22,15 +22,15 @@ CTRLN = \14
 CTRLP = \16
 ENTER = \13
 
-export search = (items, cb) ->
-  search-core items, cb
+export search = (items, cb, matcher) ->
+  search-core items, cb, null, matcher
 
-export search-using-default = (items, cb, default-cb) ->
+export search-using-default = (items, cb, default-cb, matcher) ->
   # same as standard search, but use the search string
   # if no matches are available. 
   search-core items, cb, (default-cb or cb)
 
-search-core = (items, cb, default-cb) ->
+search-core = (items, cb, default-cb, matcher) ->
   # each "item" should be a string
 
   # get the terminal ready
@@ -81,7 +81,7 @@ search-core = (items, cb, default-cb) ->
         state.needle = state.needle + chunk
         state.height = 0
 
-    get-hits state, items, rows
+    get-hits state, items, rows, matcher
     draw-screen charm, rows, cols, state.needle, state.height, state.matches
 
     # send a little data to get things started
@@ -131,31 +131,35 @@ draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
       charm.write txt.substr (hit.index + hit.0.length)
       charm.write (' ' * pad-length)
 
-get-hits = (state, items, rows) ->
+get-hits = (state, items, rows, matcher) ->
   # filter items to match needle
   matches = []
   for item in items
-    hit = query-hits state.needle, item
+    hit = query-hits state.needle, item, matcher
     if hit then matches.push hit
     # don't bother matching more stuff than we have rows on screen
     if matches.length > rows then break
   state.matches = matches
 
-query-hits = (needle, haystack) ->
+query-hits = (needle, haystack, matcher) ->
   if not needle or needle.length == 0 then return haystack
 
   regex = null
 
-  if migemo
-    regex = migemo.to-regex needle
+  if matcher # use a custom matcher if provided
+    if matcher needle, haystack
+      return SearchyMatch haystack, ''
   else
-    # case sensitivity works like vim "smartcase" - case insensitive by default,
-    # case sensitive if caps are in the query
-    option = if /[A-Z]/.test needle then "" else \i
-    regex = (new RegExp needle, option)
+    if migemo
+      regex = migemo.to-regex needle
+    else
+      # case sensitivity works like vim "smartcase" - case insensitive by default,
+      # case sensitive if caps are in the query
+      option = if /[A-Z]/.test needle then "" else \i
+      regex = (new RegExp needle, option)
 
-  if regex.test haystack
-    return SearchyMatch haystack, haystack.match regex
+    if regex.test haystack
+      return SearchyMatch haystack, haystack.match regex
 
 # To hold state for matches
 # Necessary because JS doesn't allow adding properties to Strings
