@@ -27,7 +27,7 @@ Case matching uses "smartcase" like Vim; matches are not case-sensitive unless t
 Searchy your shell history for that command you can't quite remember by adding this to your `.bashrc`: (inspired by [hstr](https://github.com/dvorka/hstr))
 
     function hh () {
-      $(history | cut -d' ' -f3- | awk '!seen[$0]++' | searchy)
+      $(history | cut -c 8- | awk '!seen[$0]++' | searchy)
     }
     # add this line to replace the default history search:
     bind -x $'"\C-r":hh'
