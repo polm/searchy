@@ -101,13 +101,15 @@ search-core = (items, cb, default-cb, matcher) ->
   ttys.stdin.emit \data, [127] # backspace to trigger first display
 
 cleanup-screen = (charm) ->
+  charm.display \reset
+  # Charm has a bug where "erase screen" doesn't work, so erase above and below
+  charm.erase \up
+  charm.erase \down
+  charm.position 1, 1
+  charm.cursor true
+  charm.end!
   ttys.stdin.set-raw-mode false
   ttys.stdin.end!
-  charm.erase \screen
-  charm.cursor true
-  charm.display \reset
-  charm.position 1, 1
-  charm.end!
 
 draw-screen = (charm, rows, columns, needle, sel-row, matches, old-row=-1) ->
   # now draw the screen
