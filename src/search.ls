@@ -28,7 +28,7 @@ export search = (items, cb, matcher) ->
 export search-using-default = (items, cb, default-cb, matcher) ->
   # same as standard search, but use the search string
   # if no matches are available. 
-  search-core items, cb, (default-cb or cb)
+  search-core items, cb, (default-cb or cb), matcher
 
 search-core = (items, cb, default-cb, matcher) ->
   # each "item" should be a string
