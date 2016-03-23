@@ -77,7 +77,7 @@ search-core = (items, cb, default-cb, matcher) ->
     | ENTER =>
       cleanup-screen charm
       if state.matches.length > 0
-        cb? state.matches[state.height].to-string!
+        cb? state.matches[state.height]
       else # if no matches, pass search string instead
         default-cb? state.needle
     | BACKSPACE =>
