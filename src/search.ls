@@ -95,8 +95,14 @@ search-core = (items, cb, default-cb, matcher) ->
       get-hits state, items, rows, matcher
       draw-screen charm, rows, cols, state.needle, state.height, state.matches
 
+    # draw hit count
+    count-string = "(#{state.matches.length}/#{items.length})"
+    charm.position (cols - count-string.length), 1
+    charm.write count-string
+
     charm.cursor true
     charm.position ("query: " + state.needle).length + 1, 1
+
 
   ttys.stdin.emit \data, [127] # backspace to trigger first display
 
