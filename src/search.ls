@@ -169,7 +169,7 @@ query-hits = (needle, haystack, matcher) ->
 
   if matcher # use a custom matcher if provided
     if matcher needle, haystack
-      return SearchyMatch haystack, ''
+      return haystack
   else
     if migemo
       regex = migemo.to-regex needle

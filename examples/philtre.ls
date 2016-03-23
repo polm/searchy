@@ -16,7 +16,7 @@ items =
     tags: <[ dog cat ]>
 
 items.map (me) ->
-  me.to-string = -> me.title
+  me.to-string = -> [ this.title, this.tags.join ', '].join ' :: '
 
 search items, (-> console.log it), (needle, haystack) ->
   try
