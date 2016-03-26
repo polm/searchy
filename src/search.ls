@@ -5,7 +5,7 @@ ttys = require \ttys
 # use migemo if available
 migemo = null
 try
-  migemo = require \node-migemo
+  migemo = require \migemo
 catch
   # not available, that's ok
 
