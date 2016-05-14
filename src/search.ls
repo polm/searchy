@@ -144,12 +144,25 @@ draw-row = (charm, rows, columns, needle, sel-row, matches, row) ->
     txt = matches[row].to-string!
     # vw handles wide characters for us
     pad-length = Math.max 0, columns - vw.width txt
+
     # if we have no search, don't highlight
     if not matches[row].hit
-      charm.write txt + (' ' * pad-length)
+      charm.write vw.truncate (txt + (' ' * pad-length)), columns, ''
     else
       # highlight hits
       hit = matches[row].hit
+
+      # deal with the case where it goes off the edge
+      if (vw.width txt) > columns
+        txt = vw.truncate txt, columns, ''
+        if columns < vw.width txt.substr 0, hit.index
+          # we don't have room to show the hit at all
+          hit.index = 0
+          hit.length = 0
+        if txt.length < hit.index + hit.length
+          # hit runs into end of line
+          hit.length = txt.length - hit.index
+
       charm.write txt.substr 0, hit.index
       charm.foreground \yellow
       charm.write txt.substr hit.index, hit.0.length

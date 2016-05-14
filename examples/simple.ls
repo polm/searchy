@@ -4,5 +4,5 @@
 
 {search, search-using-default} = require \../lib/search
 
-search-using-default <[ panda PANDA PanDa fish Fish phisH toukyou 東京 とうきょう]>, (->
+search-using-default <[ panda PANDA PanDa fish Fish phisH toukyou 東京 とうきょう日本語日本語日本語にほんごごごごごごごごごごごごごごごごごごごごごごごごご asdf]>, (->
   console.log "You picked #it! Congratulations!"), -> console.log "default: " + it
