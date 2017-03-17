@@ -1,6 +1,7 @@
 Charm = require \charm
 vw = require \visualwidth
 ttys = require \ttys
+debounce = require \lodash.debounce
 
 # use migemo if available
 migemo = null
@@ -18,6 +19,7 @@ CTRLC = \3
 CTRLD = \4
 CTRLK = \11
 CTRLJ = \10
+CTRLL = \12
 CTRLN = \14
 CTRLP = \16
 ENTER = \13
@@ -84,19 +86,21 @@ search-core = (items, cb, default-cb, matcher) ->
       state.height = 0
       if state.needle.length > 0
         state.needle = state.needle.substr 0, state.needle.length - 1
-      get-hits state, items, rows, matcher
-      draw-screen charm, rows, cols, state.needle, state.height, state.matches
+      draw-needle charm, state.needle
+      update-results state, items, charm, rows, cols, matcher
+    | CTRLL =>
+      \ok # do nothing
     # if it's not special it's just text
     default =>
       # ignore other escapes
       if 0 != that.index-of "27.91."
         state.needle = state.needle + chunk
         state.height = 0
-      get-hits state, items, rows, matcher
-      draw-screen charm, rows, cols, state.needle, state.height, state.matches
+      draw-needle charm, state.needle
+      update-results state, items, charm, rows, cols, matcher
 
     # draw hit count
-    count-string = "(#{state.matches.length}/#{items.length})"
+    count-string = "(#{state.matches.length}/#{items.length or \???})"
     charm.position (cols - count-string.length), 1
     charm.write count-string
 
@@ -105,6 +109,12 @@ search-core = (items, cb, default-cb, matcher) ->
 
 
   ttys.stdin.emit \data, [127] # backspace to trigger first display
+
+update-results = (state, items, charm, rows, cols, matcher) ->
+  get-hits state, items, rows, matcher
+  draw-screen charm, rows, cols, state.needle, state.height, state.matches
+
+update-results = debounce update-results, 100, leading: true
 
 cleanup-screen = (charm) ->
   charm.display \reset
@@ -117,10 +127,17 @@ cleanup-screen = (charm) ->
   ttys.stdin.set-raw-mode false
   ttys.stdin.end!
 
-draw-screen = (charm, rows, columns, needle, sel-row, matches, old-row=-1) ->
+draw-needle = (charm, needle) ->
+  charm.display \reset
+  charm.position 1, 1
+  charm.erase \line
+  charm.write "query: " + needle
+
+draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
   # now draw the screen
   charm.display \reset
-  charm.erase \screen
+  charm.erase \up
+  charm.erase \down
   charm.position 1, 1
   charm.write "query: " + needle
 
@@ -147,7 +164,7 @@ draw-row = (charm, rows, columns, needle, sel-row, matches, row) ->
 
     # if we have no search, don't highlight
     if not matches[row].hit
-      charm.write vw.truncate (txt + (' ' * pad-length)), columns, ''
+      charm.write vw.truncate (txt + (' ' * pad-length)), columns - 1, ''
     else
       # highlight hits
       hit = matches[row].hit
