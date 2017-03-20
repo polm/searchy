@@ -89,7 +89,8 @@ search-core = (items, cb, default-cb, matcher) ->
       draw-needle charm, state.needle
       update-results state, items, charm, rows, cols, matcher
     | CTRLL =>
-      \ok # do nothing
+      draw-needle charm, state.needle
+      update-results state, items, charm, rows, cols, matcher
     # if it's not special it's just text
     default =>
       # ignore other escapes
@@ -107,8 +108,9 @@ search-core = (items, cb, default-cb, matcher) ->
     charm.cursor true
     charm.position ("query: " + state.needle).length + 1, 1
 
-
-  ttys.stdin.emit \data, [127] # backspace to trigger first display
+  refresh = -> ttys.stdin.emit \data, [CTRLL]
+  refresh! # for first draw
+  return {items: items, refresh: refresh} # this way async collections can update
 
 update-results = (state, items, charm, rows, cols, matcher) ->
   get-hits state, items, rows, matcher
@@ -136,9 +138,8 @@ draw-needle = (charm, needle) ->
 draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
   # now draw the screen
   charm.display \reset
-  charm.erase \up
-  charm.erase \down
   charm.position 1, 1
+  charm.erase \line
   charm.write "query: " + needle
 
   # draw the choices
