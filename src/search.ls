@@ -62,6 +62,12 @@ search-core = (items, cb, default-cb, matcher) ->
 
     charm.cursor false
 
+    # mashing backspace can group keypresses; split them up
+    if chunk[0] == +BACKSPACE and chunk.length > 1
+      for ii from 0 til chunk.length
+        ttys.stdin.emit \data, [BACKSPACE]
+      return
+
     switch bytes-to-string chunk
     | UP, CTRLP, CTRLK =>
       old-height = state.height
@@ -137,10 +143,7 @@ draw-needle = (charm, needle) ->
 
 draw-screen = (charm, rows, columns, needle, sel-row, matches) ->
   # now draw the screen
-  charm.display \reset
-  charm.position 1, 1
-  charm.erase \line
-  charm.write "query: " + needle
+  draw-needle charm, needle
 
   # draw the choices
   for row from 0 til rows - 1
