@@ -232,7 +232,9 @@ read-stdin-as-lines-then = (func) ->
   buf = ''
   process.stdin.set-encoding \utf-8
   process.stdin.on \data, -> buf += it
-  process.stdin.on \end, -> func (buf.split "\n" |> no-empty)
+  process.stdin.on \end, ->
+    console.log "\033[2J\033[;H"
+    func (buf.split "\n" |> no-empty)
 
 no-empty = -> it.filter (-> not (it == null or it == '') )
 
