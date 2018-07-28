@@ -1,3 +1,5 @@
+**NOTE:** At some point a change in node broke some uses of this and I'm not interested in fixing it. You're better off using [fzf](https://github.com/junegunn/fzf).
+
 # Searchy
 
 ![searchy demo](http://i.imgur.com/EWO4GLF.gif)
